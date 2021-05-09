@@ -14,25 +14,29 @@ import { Link } from 'react-router-dom'
 
 import { GlobalContext } from '../../../context/GlobalContext'
 
+import Alert from '../../Alerts'
+
 const Table = () => {
   const { products, deleteProduct } = useContext(GlobalContext)
-  const [open, setOpen] = useState(false)
+  const [openConfirmation, setOpenConfirmation] = useState(false)
+  const [openAlert, setOpenAlert] = useState(false)
   const [selected, setSelected] = useState('')
 
   const handleClickOpen = (id: string) => {
     setSelected(id)
-    setOpen(true)
+    setOpenConfirmation(true)
   }
 
   const handleClose = () => {
     setSelected('')
-    setOpen(false)
+    setOpenConfirmation(false)
   }
 
   const handleDeleteProduct = () => {
     if (selected) {
       deleteProduct(selected)
-      setOpen(false)
+      setOpenAlert(true)
+      setOpenConfirmation(false)
     }
   }
 
@@ -43,6 +47,31 @@ const Table = () => {
       </IconButton>
     </Link>
   )
+
+  const translateCategory = (category: string) => {
+    switch (category) {
+      case 'milk':
+        return 'Leite'
+
+      case 'sweet':
+        return 'Doce'
+
+      case 'yogurt':
+        return 'Iogurte'
+
+      default:
+        break
+    }
+  }
+
+  const convertCurrency = (price: string) => {
+    const newPrice = new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    })
+
+    return newPrice.format(Number(price))
+  }
 
   const columns = (row: any) => [
     {
@@ -55,14 +84,16 @@ const Table = () => {
       sortable: true
     },
     {
-      name: 'Preço',
+      name: 'Preço (R$)',
       selector: 'price',
-      sortable: true
+      sortable: true,
+      cell: (row: any) => convertCurrency(row.price)
     },
     {
       name: 'Categoria',
       selector: 'category',
-      sortable: true
+      sortable: true,
+      cell: (row: any) => translateCategory(row.category)
     },
     {
       name: 'Ações',
@@ -95,7 +126,7 @@ const Table = () => {
       />
 
       <Dialog
-        open={open}
+        open={openConfirmation}
         onClose={handleClose}
         aria-labelledby='alert-dialog-title'
         aria-describedby='alert-dialog-description'
@@ -112,6 +143,13 @@ const Table = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Alert
+        open={openAlert}
+        setOpen={setOpenAlert}
+        message='Produto removido com sucesso.'
+        type='success'
+      />
     </Card>
   )
 }
