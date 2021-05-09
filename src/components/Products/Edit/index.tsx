@@ -1,4 +1,5 @@
-import { useContext } from 'react'
+import { useContext, useEffect, useState } from 'react'
+import { Link, useHistory, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import Card from '@material-ui/core/Card'
 import TextField from '@material-ui/core/TextField'
@@ -13,39 +14,45 @@ import SaveIcon from '@material-ui/icons/Save'
 
 import { GlobalContext } from '../../../context/GlobalContext'
 
-import { Link, useHistory } from 'react-router-dom'
-import { v4 as uuidV4 } from 'uuid'
-
 import { Product } from '../../../ts/interfaces/productsInterfaces'
+
+interface ParamTypes {
+  id: string
+}
 
 const inputStyle = { margin: '0.6rem' }
 
-const Add = () => {
-  const { products, addProduct } = useContext(GlobalContext)
+const Edit = () => {
+  const { products, editProduct } = useContext(GlobalContext)
+  const [data, setData] = useState({
+    id: '',
+    sku: 0,
+    name: '',
+    price: '',
+    category: ''
+  })
+
   const history = useHistory()
+  const { id } = useParams<ParamTypes>()
 
-  const { register, handleSubmit, reset } = useForm<Product>()
+  const { register, handleSubmit } = useForm<Product>()
 
-  const onSubmit = (data: Product) => {
-    const newData = Object.assign(data, { id: uuidV4() })
-
-    const findSkuDuplicated = products.find(
-      (product: Product) => product.sku === data.sku
-    )
-
-    if (!findSkuDuplicated) {
-      addProduct(newData)
-      reset(data)
-      history.push('/')
-    } else {
-      alert('Código SKU duplicado. Por favor insire outro.')
+  useEffect(() => {
+    if (id) {
+      const product = products.find((product: Product) => product.id === id)
+      setData(product)
     }
+  }, [id, products, setData])
+
+  const onSubmit = () => {
+    editProduct(data)
+    history.push('/')
   }
 
   return (
     <Card style={{ padding: '1rem', width: '35rem', margin: '0 auto' }}>
       <Typography variant='h6' align='center' gutterBottom>
-        Cadastrar produto
+        Atualizar produto
       </Typography>
 
       <form
@@ -53,37 +60,65 @@ const Add = () => {
         onSubmit={handleSubmit(onSubmit)}
       >
         <TextField
-          {...register('sku', { required: true })}
+          {...register('sku')}
           id='sku'
           label='Código SKU'
           variant='outlined'
           style={inputStyle}
           type='number'
+          value={data.sku}
+          onChange={(e) => {
+            setData({
+              ...data,
+              sku: parseInt(e.target.value)
+            })
+          }}
         />
         <TextField
-          {...register('name', { required: true })}
+          {...register('name')}
           id='name'
           label='Nome do produto'
           variant='outlined'
           style={inputStyle}
+          value={data.name}
+          onChange={(e) =>
+            setData({
+              ...data,
+              name: e.target.value
+            })
+          }
         />
 
         <TextField
-          {...register('price', { required: true })}
+          {...register('price')}
           id='price'
           label='Preço'
           variant='outlined'
           style={inputStyle}
+          value={data.price}
+          onChange={(e) =>
+            setData({
+              ...data,
+              price: e.target.value
+            })
+          }
         />
 
         <FormControl variant='outlined' style={inputStyle}>
           <InputLabel id='category'>Categoria</InputLabel>
           <Select
-            {...register('category', { required: true })}
+            {...register('category')}
             defaultValue=''
             labelId='category'
             id='category'
             label='category'
+            value={data.category}
+            onChange={(e) =>
+              setData({
+                ...data,
+                category: e.target.value as any
+              })
+            }
           >
             <MenuItem value='milk'>Leite</MenuItem>
             <MenuItem value='sweet'>Doce</MenuItem>
@@ -104,7 +139,7 @@ const Add = () => {
             startIcon={<SaveIcon />}
             type='submit'
           >
-            Salvar
+            Atualizar
           </Button>
           <Link to='/' style={{ textDecoration: 'none' }}>
             <Button variant='contained' startIcon={<ArrowBackIcon />}>
@@ -117,4 +152,4 @@ const Add = () => {
   )
 }
 
-export default Add
+export default Edit
